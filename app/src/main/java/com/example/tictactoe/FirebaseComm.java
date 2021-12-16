@@ -51,4 +51,27 @@ public class FirebaseComm
                     }
                 });
     }
+
+    public void loginUser(String email, String password)
+    {
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(
+                        new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(
+                                    @NonNull Task<AuthResult> task)
+                            {
+                                if (task.isSuccessful()) {
+
+                                        Log.d(TAG, "onComplete: success ");
+                                        onFirebaseResult.firebaseResult(ResultType.LOGIN,true);
+                                    }
+                                      else {
+                                        Log.d(TAG, "onComplete: failed ");
+                                        onFirebaseResult.firebaseResult(ResultType.LOGIN,false);
+                                    }
+                                }
+
+             });
+    }
 }

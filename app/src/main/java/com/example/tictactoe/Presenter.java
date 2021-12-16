@@ -37,11 +37,12 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
 
     @Override
     public void userLogin(String email, String password) {
+        comm.loginUser(email,password);
 
     }
     @Override
     public void firebaseResult(FirebaseComm.ResultType result, boolean success) {
-        Log.d(TAG, "firebaseResult: PResenter : " + success);
+        Log.d(TAG, "firebaseResult: PResenter : "  + result + "," + success);
     }
 
     @Override

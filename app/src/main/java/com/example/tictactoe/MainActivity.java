@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private LinearLayout llMainDynamic;
     private IPresenter presenter;
     private EditText etMail;
+    private int num=0;
 
 
 
@@ -180,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void register(View view)
     {
-        int num = (int)(Math.random()*1000);
+        num = (int)(Math.random()*1000);
         String email = etMail.getText().toString();
         email = num+email;
 
@@ -191,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void login(View view) {
         String email = etMail.getText().toString();
+        email = num+email;
         String password = FIXED_PASSWORD;
         presenter.userLogin(email,password);
 
