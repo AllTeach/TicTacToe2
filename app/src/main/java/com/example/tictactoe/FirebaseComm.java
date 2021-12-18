@@ -163,6 +163,10 @@ public class FirebaseComm
 
 
     }
+    // when trying to start or join a game
+    // presenter calls this method to search for an open game to join
+    // if none exists it calls the start game to open a enw game and wait
+    // there for another player
     public void joinGame( )
     {
         firebaseFirestore.collection("games")
@@ -206,6 +210,16 @@ public class FirebaseComm
 
     }
 
+    // this method listens for changes in the game document
+    // whenever fields are changed - the snapshot listener is called
+    // The way it is implemented here ->
+    // changes from both players trigger this method...
+    // possible to impolement in a different way
+    // the code:
+    // boolean fromOther = !(fbUser.getEmail()).equals(g.getCurrPlayer());
+    // checks whether this are changes other player triggerd or this player
+    // no need for the presenter to handle again events that where
+    // already handled
     private void handleGameMoves(DocumentReference reference) {
         reference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
             @Override
@@ -241,15 +255,13 @@ public class FirebaseComm
         });
     }
 
+    // update firestore with current move
     public void makeMove(int row,int col)
     {
         game.setRow(row);
         game.setCol(col);
         game.setCurrPlayer(fbUser.getEmail());
         gameReference.set(game, SetOptions.merge());
-
-
-
 
     }
 }
