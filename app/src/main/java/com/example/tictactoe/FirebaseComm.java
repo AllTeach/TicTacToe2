@@ -31,6 +31,7 @@ public class FirebaseComm
 
     private Game game;
     private User fbUser;
+    private DocumentReference gameReference;
 
     enum ResultType
     {
@@ -134,9 +135,10 @@ public class FirebaseComm
     {
         game = new Game(fbUser.getEmail(), "" ,"created",-1,-1);
         firebaseFirestore = FirebaseFirestore.getInstance();
-        DocumentReference gameRef = firebaseFirestore.collection("games")
+       // DocumentReference gameRef = firebaseFirestore.collection("games")
+         gameReference = firebaseFirestore.collection("games")
                 .document(fbUser.getEmail());
-                 gameRef.set(game)
+                gameReference.set(game)
 
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
@@ -146,7 +148,7 @@ public class FirebaseComm
                         onFirebaseResult.firebaseGameInfo(ResultType.GAME_CREATED,true,-1,-1);
 
                         // listen to game moves
-                        handleGameMoves(gameRef);
+                        handleGameMoves(gameReference);
 
                         Log.d(TAG, "DocumentSnapshot successfully written!");
                     }
@@ -182,13 +184,15 @@ public class FirebaseComm
                                    // join with email
                                    game.setNameOther(fbUser.getEmail());
                                    game.setStatus("started");
-                                   document.getReference().set(game, SetOptions.merge());
+                                   gameReference = document.getReference();
+                               //    document.getReference().set(game, SetOptions.merge());
+                                    gameReference.set(game, SetOptions.merge());
 
                                    // notify presenter
                                    // let presenter know game started
                                    onFirebaseResult.firebaseGameInfo(ResultType.GAME_JOINED,true,-1,-1);
 
-                                   handleGameMoves(document.getReference());
+                                   handleGameMoves(gameReference);
 
 
 
@@ -218,19 +222,17 @@ public class FirebaseComm
                     if(game.getStatus().equals("created") && g.getStatus().equals("started"))
                     {
                         game.setStatus(g.getStatus());
+
                         onFirebaseResult.firebaseGameInfo(ResultType.GAME_STARTED,true,g.getRow(),g.getCol());
 
                     }
                     // this means ongoing game, either owner played
                     // or other got response as well
                     // this means moving other from joined to started
-                    else if(!(g.getRow() ==-1 && g.getCol() ==-1))
-                        onFirebaseResult.firebaseGameInfo(ResultType.GAME_MOVE,true,g.getRow(),g.getCol());
-
-
-
-
-
+                    else if(!(g.getRow() ==-1 && g.getCol() ==-1)) {
+                        boolean fromOther = !(fbUser.getEmail()).equals(g.getCurrPlayer());
+                        onFirebaseResult.firebaseGameInfo(ResultType.GAME_MOVE, fromOther, g.getRow(), g.getCol());
+                    }
                     Log.d(TAG, "Current data: " + snapshot.getData());
                 } else {
                     Log.d(TAG, "Current data: null");
@@ -241,6 +243,13 @@ public class FirebaseComm
 
     public void makeMove(int row,int col)
     {
+        game.setRow(row);
+        game.setCol(col);
+        game.setCurrPlayer(fbUser.getEmail());
+        gameReference.set(game, SetOptions.merge());
+
+
+
 
     }
 }

@@ -8,9 +8,28 @@ public class Game
     private int row;
     private int col;
 
+    public Game(String nameOwner, String nameOther, String status, int row, int col, String currPlayer) {
+        this.nameOwner = nameOwner;
+        this.nameOther = nameOther;
+        this.status = status;
+        this.row = row;
+        this.col = col;
+        this.currPlayer = currPlayer;
+    }
+
+    private String currPlayer;
+
     public Game()
     {
 
+    }
+
+    public String getCurrPlayer() {
+        return currPlayer;
+    }
+
+    public void setCurrPlayer(String currPlayer) {
+        this.currPlayer = currPlayer;
     }
 
     public Game(String nameOwner, String nameOther, String status, int row, int col) {

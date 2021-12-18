@@ -5,12 +5,21 @@ import android.util.Log;
 
 public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
 {
+    enum GameConfig
+    {
+        LOCAL_1_ON_1,
+        LOCAL_1_VS_COMPUTER,
+        REMOTE_1_1
+    }
 
     private static final String TAG = "Presenter";
     private Model model;
     private IView view;
     private char computer = 'O';
+    private char player = 'X';
     private FirebaseComm comm;
+    private GameConfig gameConfig;
+
 
     public Presenter(IView view)
     {
@@ -18,6 +27,8 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
         this.model = new Model();
         this.model.startGame();
         comm = new FirebaseComm(this);
+        // default config Man vs Machine...
+        gameConfig = GameConfig.LOCAL_1_VS_COMPUTER;
     }
 
     @Override
@@ -45,6 +56,8 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
 
     @Override
     public void startOrJoinGame() {
+
+        gameConfig = GameConfig.REMOTE_1_1;
         comm.joinGame();
     }
 
@@ -89,14 +102,31 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
                 else {
                     // update model with move
                     // update view
-                    this.view.markButton(row,col,'X');
+                    this.view.markButton(row,col,computer);
+                    this.model.userTurn(new Move(row,col),computer);
+
                 }
 
 
                 break;
             case GAME_MOVE:
                 // game has started,
-                this.view.markButton(row,col,'X');
+                // if success this means from other player
+                if(success) {
+                    this.view.markButton(row, col, computer);
+                    this.model.userTurn(new Move(row, col), computer);
+                    GameState state =this.model.gameOver();
+                    if(  state== GameState.TIE) {
+                        //    this.view.displayMessage("No More Turns");
+                        this.view.displayEndGame("TIE");
+                    }
+                    else if (state == GameState.COMPUTER_WIN)
+                    {
+                        //   this.view.displayMessage("Computer win....");
+                        this.view.displayEndGame("COMPUTER WINS");
+                    }
+                }
+
                 break;
         }
     }
@@ -106,7 +136,7 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
     {
         // create move and pass to model
         Move m = new Move(row,col);
-        this.model.userTurn(m);
+        this.model.userTurn(m,player);
 
         // check if game over or win
         GameState state =this.model.gameOver();
@@ -118,6 +148,12 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
         {
          //   this.view.displayMessage("CONGRATS!! you won");
             this.view.displayEndGame("PLAYER WINS!");
+        }
+        // else?
+        if(gameConfig == GameConfig.REMOTE_1_1)
+        {
+            // send FireBase
+            comm.makeMove(row,col);
         }
         // move to computer turn
         else {

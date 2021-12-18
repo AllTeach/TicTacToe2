@@ -90,9 +90,9 @@ public class Model
 
     }
 
-    public void userTurn(Move m)
+    public void userTurn(Move m,char letter)
     {
-        board[m.getRow()][m.getCol()] = 'X';
+        board[m.getRow()][m.getCol()] = letter;
         this.numTurns++;
     }
     /// at the moment find the first available move
