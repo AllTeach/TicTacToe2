@@ -4,22 +4,41 @@ package com.example.tictactoe;
 import android.util.Log;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class FirebaseComm
 {
     private final static FirebaseAuth mAuth= FirebaseAuth.getInstance();
     private static final String TAG = "Firebase Comm";
     private IOnFirebaseResult onFirebaseResult;
+    private FirebaseFirestore firebaseFirestore;
+
+    private User fbUser;
 
     enum ResultType
     {
         REGISTER,
         LOGIN,
+        GAME_CREATED,
+        GAME_JOINED,
+        GAME_STARTED,
+        NO_PENDING_GAMES
 
 
 
@@ -27,14 +46,22 @@ public class FirebaseComm
     interface IOnFirebaseResult
     {
         void firebaseResult(ResultType result,boolean success);
+        void firebaseGameInfo(ResultType result,boolean success,int row, int col);
     }
 
     public FirebaseComm(IOnFirebaseResult onFirebaseResult) {
         this.onFirebaseResult = onFirebaseResult;
     }
 
-    public void registerUser(String email, String password)
+    public void createFbUser(String email, String password)
     {
+        fbUser = new User(email,password,"");
+    }
+
+    public void registerUser()
+    {
+        String email=fbUser.getEmail();
+        String password = fbUser.getPassword();
         mAuth.createUserWithEmailAndPassword(email,password)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
@@ -42,7 +69,9 @@ public class FirebaseComm
                         if(task.isSuccessful())
                         {
                             Log.d(TAG, "onComplete: success ");
-                            onFirebaseResult.firebaseResult(ResultType.REGISTER,true);
+                            fbUser.setUser_id(mAuth.getUid());
+                            enterUserToFirebase(fbUser);
+
                         }
                         else {
                             Log.d(TAG, "onComplete: failed ");
@@ -54,6 +83,7 @@ public class FirebaseComm
 
     public void loginUser(String email, String password)
     {
+
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(
                         new OnCompleteListener<AuthResult>() {
@@ -62,6 +92,9 @@ public class FirebaseComm
                                     @NonNull Task<AuthResult> task)
                             {
                                 if (task.isSuccessful()) {
+
+                                    if(fbUser==null)
+                                        createFbUser(email,password);
 
                                         Log.d(TAG, "onComplete: success ");
                                         onFirebaseResult.firebaseResult(ResultType.LOGIN,true);
@@ -73,5 +106,107 @@ public class FirebaseComm
                                 }
 
              });
+    }
+
+    public void enterUserToFirebase(User u)
+    {
+        firebaseFirestore = FirebaseFirestore.getInstance();
+        DocumentReference userRef = firebaseFirestore.collection("users")
+                .document(u.getUser_id());
+        userRef.set(u)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        onFirebaseResult.firebaseResult(ResultType.REGISTER,true);
+
+                        Log.d(TAG, "DocumentSnapshot successfully written!");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Error writing document", e);
+                    }
+                });
+
+    }
+
+    public void createGame()
+    {
+        Game game = new Game(fbUser.getEmail(), "" ,"created",-1,-1);
+        firebaseFirestore = FirebaseFirestore.getInstance();
+        DocumentReference gameRef = firebaseFirestore.collection("games")
+                .document(fbUser.getEmail());
+                 gameRef.set(game)
+
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+
+                        // let presenter know game created
+                        onFirebaseResult.firebaseGameInfo(ResultType.GAME_CREATED,true,-1,-1);
+                        gameRef.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                                @Override
+                                public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+                                    Log.d(TAG, "onEvent: ");
+
+                                }
+                            }
+
+                        );
+
+                        Log.d(TAG, "DocumentSnapshot successfully written!");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG, "Error writing document", e);
+                    }
+                });
+
+
+
+    }
+    public void joinGame( )
+    {
+        firebaseFirestore.collection("games")
+                .whereEqualTo("status", "created")
+                .limit(1).get()
+
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        // notify presenter there are no  open games
+                        if (task.isSuccessful()) {
+                            if(task.getResult().size() == 0)
+                                onFirebaseResult.firebaseGameInfo(ResultType.NO_PENDING_GAMES,true,-1,-1);
+
+                            for( QueryDocumentSnapshot document : task.getResult()) {
+                                   Log.d(TAG, document.getId() + " => " + document.getData());
+                                   // get the game
+                                   Game game = document.toObject(Game.class);
+                                   // join with email
+                                   game.setNameOther(fbUser.getEmail());
+                                   game.setStatus("started");
+                                   document.getReference().set(game, SetOptions.merge());
+
+                                   // notify presenter
+                                   // let presenter know game started
+                                   onFirebaseResult.firebaseGameInfo(ResultType.GAME_STARTED,true,-1,-1);
+
+                              }
+                        } else {
+                            Log.d(TAG, "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
+
+
+    }
+
+    public void makeMove(int row,int col)
+    {
+
     }
 }

@@ -2,6 +2,7 @@ package com.example.tictactoe;
 
 import android.util.Log;
 
+
 public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
 {
 
@@ -9,7 +10,6 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
     private Model model;
     private IView view;
     private char computer = 'O';
-
     private FirebaseComm comm;
 
     public Presenter(IView view)
@@ -31,7 +31,9 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
 
     @Override
     public void userRegister(String email, String password) {
-        comm.registerUser(email,password);
+
+        comm.createFbUser(email,password);
+        comm.registerUser();
 
     }
 
@@ -40,9 +42,54 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
         comm.loginUser(email,password);
 
     }
+
+    @Override
+    public void startOrJoinGame() {
+        comm.joinGame();
+    }
+
     @Override
     public void firebaseResult(FirebaseComm.ResultType result, boolean success) {
+
+        switch(result)
+        {
+            case REGISTER:
+                this.view.displayMessage("Register success");
+                break;
+            case LOGIN:
+                this.view.displayMessage("Login success");
+                break;
+
+
+
+        }
         Log.d(TAG, "firebaseResult: PResenter : "  + result + "," + success);
+    }
+
+    @Override
+    public void firebaseGameInfo(FirebaseComm.ResultType result, boolean success, int row, int col) {
+        switch(result) {
+            case NO_PENDING_GAMES:
+                // start a new game
+                this.view.displayMessage("No Open Games, wait for another player");
+                comm.createGame();
+                break;
+
+            case GAME_CREATED:
+                this.view.displayMessage("No Open Games, wait for another player");
+                break;
+
+            case GAME_JOINED:
+                // game has started,
+                this.view.displayMessage("Joined game, wait for other move");
+                break;
+
+            case GAME_STARTED:
+                // game has started,
+                this.view.displayMessage("Game Started, please play your turn ");
+                break;
+
+        }
     }
 
     @Override
@@ -81,9 +128,6 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
                 this.view.displayEndGame("COMPUTER WINS");
             }
         }
-
-
-
     }
 
 

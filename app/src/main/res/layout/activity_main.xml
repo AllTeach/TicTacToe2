@@ -24,6 +24,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="register"
+            android:textSize="12sp"
             android:onClick="register"
             />
         <Button
@@ -31,7 +32,16 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="login"
+            android:textSize="12sp"
             android:onClick="login"
+            />
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="start/join"
+            android:textSize="12sp"
+            android:onClick="startOrJoinGame"
             />
     </LinearLayout>
 

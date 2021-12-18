@@ -184,8 +184,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         num = (int)(Math.random()*1000);
         String email = etMail.getText().toString();
         email = num+email;
-
-
         String password = FIXED_PASSWORD;
         presenter.userRegister(email,password);
     }
@@ -195,6 +193,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         email = num+email;
         String password = FIXED_PASSWORD;
         presenter.userLogin(email,password);
+    }
 
+    public void startOrJoinGame(View view)
+    {
+
+        this.presenter.startOrJoinGame();
     }
 }

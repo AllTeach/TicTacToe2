@@ -6,5 +6,6 @@ public interface IPresenter
     void restartGame();
     void userRegister(String email,String password);
     void userLogin(String email,String password);
+    void startOrJoinGame();
 
 }
