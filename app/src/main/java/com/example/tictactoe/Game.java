@@ -7,6 +7,8 @@ public class Game
     private String status;
     private int row;
     private int col;
+    private String currPlayer;
+
 
     public Game(String nameOwner, String nameOther, String status, int row, int col, String currPlayer) {
         this.nameOwner = nameOwner;
@@ -17,7 +19,6 @@ public class Game
         this.currPlayer = currPlayer;
     }
 
-    private String currPlayer;
 
     public Game()
     {
