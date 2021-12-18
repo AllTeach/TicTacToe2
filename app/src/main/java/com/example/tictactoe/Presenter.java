@@ -59,9 +59,6 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
             case LOGIN:
                 this.view.displayMessage("Login success");
                 break;
-
-
-
         }
         Log.d(TAG, "firebaseResult: PResenter : "  + result + "," + success);
     }
@@ -85,10 +82,22 @@ public class Presenter implements IPresenter,FirebaseComm.IOnFirebaseResult
                 break;
 
             case GAME_STARTED:
-                // game has started,
-                this.view.displayMessage("Game Started, please play your turn ");
-                break;
+                // game has started, this means it's other user
+                // wait for first one move
+                if(row==-1 && col ==-1)
+                    this.view.displayMessage("please play your move ");
+                else {
+                    // update model with move
+                    // update view
+                    this.view.markButton(row,col,'X');
+                }
 
+
+                break;
+            case GAME_MOVE:
+                // game has started,
+                this.view.markButton(row,col,'X');
+                break;
         }
     }
 
