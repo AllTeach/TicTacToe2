@@ -37,6 +37,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         presenter = new Presenter(this);
 
 
+
+
+
     }
 
     private void initViews()
